@@ -12,10 +12,29 @@ from geometry_msgs.msg import PointStamped
 from tf2_ros import Buffer, TransformListener
 from tf2_geometry_msgs import do_transform_point
 
+from enum import IntEnum
+from rclpy.duration import Duration
+from geometry_msgs.msg import Twist
+
+class State(IntEnum):
+    FORWARD = 0
+    BACK = 1
+    TURN = 2
+
+SPEED_LINEAR = 0.2
+SPEED_ANGULAR = 1.0
+BACKING_TIME = Duration(seconds=2.0)
+TURNING_TIME = Duration(seconds=2.0)
+
+
 class ObstacleDetectorNode(Node):
     def __init__(self):
         super().__init__('obstacle_detector_node')
-
+        
+        self.state = State.FORWARD
+        self.state_ts = self.get_clock().now()
+        
+        self.last_obstacle = LaserScan()
         self.declare_parameter('min_distance', 0.2)
         self.declare_parameter('base_frame', 'base_footprint')
 
@@ -34,7 +53,9 @@ class ObstacleDetectorNode(Node):
 
         self.tf_buffer = Buffer()
         self.tf_listener = TransformListener(self.tf_buffer, self)
-
+        self.vel_pub = self.create_publisher(Twist, '/out_vel', 10)
+        self.timer = self.create_timer(0.05, self.control_cycle)
+        
     def laser_callback(self, scan: LaserScan):
         if not scan.ranges:
             return
@@ -79,12 +100,28 @@ class ObstacleDetectorNode(Node):
 
             except Exception as e:
                 self.get_logger().warn(f'No TF from {scan.header.frame_id} to {self.base_frame}: {e}')
-
-
-            
+                 
         else:
             self.get_logger().debug(f'No obstacle closer than {self.min_distance:.2f} m (min={distance_min:.2f} m)')
-
+    
+    def control_cycle(self):
+        out_vel = Twist()
+        if self.state == State.FORWARD:
+            self.get_logger().info('FORWARD')
+            out_vel.linear.x = SPEED_LINEAR
+            if self.check_forward_2_back():
+               self.go_state(State.BACK)
+        elif self.state == State.BACK:
+            self.get_logger().info('BACK')
+            out_vel.linear.x = -SPEED_LINEAR
+            if self.check_back_2_turn():
+               self.go_state(State.TURN)
+        elif self.state == State.TURN:
+            self.get_logger().info('TURN')
+            out_vel.angular.z = SPEED_ANGULAR
+            if self.check_turn_2_forward():
+               self.go_state(State.FORWARD)
+        self.vel_pub.publish(out_vel)
 
 def main(args=None):
     rclpy.init(args=args)

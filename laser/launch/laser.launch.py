@@ -18,7 +18,7 @@ def generate_launch_description():
             'base_frame': 'base_footprint'
             }],
             remappings=[
-            ('/input_laser', '/scan_raw')
+            ('/input_laser', '/scan')
             ]
         ),
     ])
