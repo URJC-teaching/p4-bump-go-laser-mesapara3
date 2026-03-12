@@ -9,6 +9,7 @@ setup(
     data_files=[
         ('share/' + package_name, ['package.xml']),
         ('share/' + package_name + '/launch', ['launch/bumpgo.launch.py']),
+        ('share/' + package_name + '/launch', ['launch/lasergo.launch.py']),
         ('share/' + package_name + '/resource', ['resource/' + package_name])
     ],
     install_requires=['setuptools'],
@@ -21,6 +22,7 @@ setup(
     entry_points={
         'console_scripts': [
             'bump_go_node = fsm_bumpgo.bumpgo_node:main',
+            'laser_go_node = fsm_bumpgo.lasergo_laser_node:main'
         ],
     },
 )
