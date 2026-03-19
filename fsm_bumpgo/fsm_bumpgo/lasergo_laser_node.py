@@ -21,7 +21,7 @@ class State(IntEnum):
     TURN = 2
 
 
-MIN_DISTANCE = 0.35
+MIN_DISTANCE = 0.6
 SPEED_LINEAR = 0.2
 SPEED_ANGULAR = 0.5
 BACKING_TIME = Duration(seconds=2.0)
@@ -90,6 +90,7 @@ class LaserBumpGoNode(Node):
         distance_min = min(ranges) # closest obstacle
         min_idx = ranges.index(distance_min)
 
+        
         obstacle_msg = Bool()
         obstacle_msg.data = (distance_min < self.min_distance)
         self.obstacule_close = obstacle_msg.data
@@ -132,7 +133,6 @@ class LaserBumpGoNode(Node):
 
     # ===================================================
     #    SEGMENTAR LÁSER EN 3 REGIONES (front/left/right)
-    #    Transformando al frame base del robot via TF
     # ===================================================
     def process_regions(self, angle_base_deg, distance_base):
         """
@@ -140,9 +140,9 @@ class LaserBumpGoNode(Node):
         y actualiza la región correspondiente si la distancia es menor
         a la actual.
 
-        - front: -30° a +30°  (sector central del robot)
+        - front: +30° a -30°  (sector central del robot)
         - left:  +30° a +90°  (lado izquierdo del robot)
-        - right: -90° a -30°  (lado derecho del robot)
+        - right: -30° a -90°  (lado derecho del robot)
         """
         # Reseteamos las regiones en cada ciclo para no acumular datos viejos
         self.regions['front'] = float('inf')
@@ -152,9 +152,9 @@ class LaserBumpGoNode(Node):
         # Clasificar el punto por ángulo
         if -30.0 <= angle_base_deg <= 30.0:
             self.regions['front'] = distance_base
-        elif 30.0 < angle_base_deg <= 90.0:
+        elif 30.0 < angle_base_deg <= 60.0:
             self.regions['left'] = distance_base
-        elif -90.0 <= angle_base_deg < -30.0:
+        elif -60.0 <= angle_base_deg < -30.0:
             self.regions['right'] = distance_base
 
 

@@ -10,7 +10,7 @@ def generate_launch_description():
             name='lasergo_laser_node',
             output='screen',
             remappings=[
-                ('input_laser', '/scan_filtered'), 
+                ('input_laser', '/scan_filtered'), #/scan_filtered , _raw
                 ('/out_vel', '/cmd_vel'),
             ]
         )
